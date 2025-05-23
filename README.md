@@ -10,13 +10,14 @@ Throughout the year, major indexes add, remove, and update holdings. These index
 
 QSG-Index-Rebalance-Project/
 │
-├── data/ # Raw and cleaned data files (e.g., Excel event list)
-├── src/ # All Python scripts for backtesting, data prep, analysis
-├── results/ # Output files (performance stats, tables)
-│ └── figures/ # Generated plots and figures
-├── report/ # Final write-up/report (Markdown or PDF)
-├── requirements.txt # Python dependencies
-└── README.md # This file
+├── data/           # Raw and cleaned data files (e.g., Excel event list)
+├── src/            # All Python scripts for backtesting, data prep, analysis
+├── results/        # Output files (performance stats, tables)
+│   └── figures/    # Generated plots and figures
+├── report/         # Final write-up/report (Markdown or PDF)
+├── requirements.txt# Python dependencies
+└── README.md       # This file
+
 
 ## Strategies Implemented
 
