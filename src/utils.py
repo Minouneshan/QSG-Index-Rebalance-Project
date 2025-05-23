@@ -1,4 +1,6 @@
 import numpy as np
+import json
+import os
 
 def sharpe_ratio(returns, risk_free=0.0):
     """Compute annualized Sharpe Ratio."""    
@@ -27,3 +29,7 @@ def win_rate(pnl):
     pnl = np.array(pnl)
     return np.mean(pnl > 0)
 
+def save_summary(summary, strategy_name):
+    os.makedirs("results/summaries", exist_ok=True)
+    with open(f"results/summaries/{strategy_name}_summary.json", "w") as f:
+        json.dump(summary, f, indent=2, default=str)

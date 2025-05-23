@@ -1,10 +1,10 @@
 # src/strategies.py
 import os
-import json
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import sharpe_ratio, max_drawdown, sortino_ratio, win_rate
+from utils import sharpe_ratio, max_drawdown, sortino_ratio, win_rate, save_summary
 
 os.makedirs("results/figures", exist_ok=True)
 
@@ -96,6 +96,7 @@ def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01, sa
     }
     # PRINT summary for logs
     print(f"SUMMARY: {summary}")
+    save_summary(summary, "post_announcement_momentum")
 
     bt['exit_date'] = pd.to_datetime(bt['exit_date'])
     bt_grouped = bt.groupby('exit_date')['net_pnl'].sum().sort_index().cumsum()
@@ -183,6 +184,10 @@ def event_day_reversion(events, price, threshold=0.001, max_usd=250_000, tran_co
         "num_trades": len(rv),
         "exclusions": exclusions,
     }
+    # PRINT summary for logs
+    print(f"SUMMARY: {summary}")
+    save_summary(summary, "event_day_reversion")
+
     # [plotting section ...]
     if not rv.empty:
         rv['event_date'] = pd.to_datetime(rv['event_date'])
@@ -254,6 +259,10 @@ def buy_and_hold(events, price, max_usd=250_000, tran_cost=0.01, save_fig=True, 
         "num_trades": len(hold_df),
         "exclusions": exclusions,
     }
+    # PRINT summary for logs
+    print(f"SUMMARY: {summary}")
+    save_summary(summary, "buy_and_hold")
+
     # [plotting section ...]
     if not hold_df.empty:
         hold_df['exit_date'] = pd.to_datetime(hold_df['exit_date'])
@@ -340,6 +349,10 @@ def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.0
         "num_trades": len(df),
         "exclusions": exclusions,
     }
+    # PRINT summary for logs
+    print(f"SUMMARY: {summary}")
+    save_summary(summary, "hedged_momentum")
+
     # [plotting section ...]
     if not df.empty:
         df['exit_date'] = pd.to_datetime(df['exit_date'])
@@ -443,6 +456,11 @@ def holding_period_sweep(
             "num_trades": len(strat_df),
             "exclusions": exclusions,
         }
+
+        # PRINT summary for logs
+        print(f"SUMMARY: {sweep_summaries}")
+        save_summary(sweep_summaries, "holding_period_sweep")
+
         # Save the cumulative PnL curve for this holding period
         equity_curve = strat_df.sort_values('exit_date').set_index('exit_date')['net_pnl'].cumsum()
         sweep_pnls[hold_days] = equity_curve
