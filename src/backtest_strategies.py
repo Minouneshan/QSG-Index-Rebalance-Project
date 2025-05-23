@@ -61,23 +61,24 @@ events = events.drop(columns=['Date'])
 # ===== 3. Run Strategies =====
 
 print(">>> Running Post-Announcement Momentum Strategy...")
-bt = post_announcement_momentum(events, price, save_fig=True,show_fig=False)
+bt, bt_summary = post_announcement_momentum(events, price, save_fig=True, show_fig=False)
 bt.to_csv("results/post_announcement_momentum.csv", index=False)
 
+
 print(">>> Running Event Day Reversion Strategy...")
-rv = event_day_reversion(events, price, save_fig=True,show_fig=False)
+rv, rv_summary = event_day_reversion(events, price, save_fig=True,show_fig=False)
 rv.to_csv("results/event_day_reversion.csv", index=False)
 
 print(">>> Running Buy-and-Hold Strategy...")
-bh = buy_and_hold(events, price, save_fig=True,show_fig=False)
+bh, bh_summary = buy_and_hold(events, price, save_fig=True,show_fig=False)
 bh.to_csv("results/buy_and_hold.csv", index=False)
 
 print(">>> Running Hedged Momentum (5-day hold) Strategy...")
-hm = hedged_momentum(events, price, spy_df, hold_days=5, save_fig=True,show_fig=False)
+hm, hm_summary = hedged_momentum(events, price, spy_df, hold_days=5, save_fig=True,show_fig=False)
 hm.to_csv("results/hedged_momentum_5d.csv", index=False)
 
 print(">>> Running Holding Period Sweep (1-10 days)...")
-sweep_df, sweep_pnls = holding_period_sweep(
+sweep_df, sweep_summary, sweep_pnls = holding_period_sweep(
     events, price, spy_df, min_days=1, max_days=10, save_fig=True,show_fig=False
 )
 sweep_df.to_csv("results/holding_period_sweep.csv", index=False)
