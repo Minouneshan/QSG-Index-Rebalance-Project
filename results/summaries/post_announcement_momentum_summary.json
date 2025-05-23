@@ -1,0 +1,16 @@
+{
+  "total_net_pnl": -110822.40851337432,
+  "avg_return": -0.0025441435576669734,
+  "win_rate": 0.5,
+  "avg_holding_days": 5.2,
+  "std_return": 0.0677473743768304,
+  "sharpe": -0.5991448328922144,
+  "sortino": -0.8651420345827542,
+  "max_drawdown": 492071.66074592585,
+  "num_trades": 100,
+  "exclusions": {
+    "no_price": 38,
+    "illiquid": 0,
+    "too_small": 0
+  }
+}
