@@ -316,10 +316,18 @@ def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.0
     return df
 
 # ===== 5. Holding Period Sweep =====
-def holding_period_sweep(events, price, spy, min_days=1, max_days=10, portfolio_size=5_000_000, tran_cost=0.01, fed_funds_rate=0.05, save_fig=True, show_fig=False):
+def holding_period_sweep(
+    events, price, spy,
+    min_days=1, max_days=10,
+    portfolio_size=5_000_000, tran_cost=0.01, fed_funds_rate=0.05,
+    save_fig=True, show_fig=False
+):
+    import os
+    os.makedirs("results/figures/sweep", exist_ok=True)
+
     sweep_results = []
     sweep_pnls = {}
-    for hold_days in range(min_days, max_days+1):
+    for hold_days in range(min_days, max_days + 1):
         strat_results = []
         for idx, row in events.iterrows():
             ticker = row['Yahoo_Ticker']
@@ -327,7 +335,7 @@ def holding_period_sweep(events, price, spy, min_days=1, max_days=10, portfolio_
             exit_date = row['Trade Date'] - pd.Timedelta(days=1)
             # Adjust exit to max N days after entry (can't go past day before Trade Date)
             if (exit_date - entry_date).days + 1 > hold_days:
-                exit_date = entry_date + pd.Timedelta(days=hold_days-1)
+                exit_date = entry_date + pd.Timedelta(days=hold_days - 1)
             try:
                 entry = price.loc[(entry_date, ticker)]
                 exit_ = price.loc[(exit_date, ticker)]
@@ -378,30 +386,39 @@ def holding_period_sweep(events, price, spy, min_days=1, max_days=10, portfolio_
         strat_df = pd.DataFrame(strat_results)
         if len(strat_df) == 0:
             continue
-        total_pnl = strat_df['net_pnl'].sum()
-        avg_return = strat_df['return'].mean()
-        win_rate = (strat_df['net_pnl'] > 0).mean()
-        avg_holding = strat_df['trade_days'].mean()
-        # Sharpe
-        if strat_df['return'].std() > 0:
-            sharpe = strat_df['return'].mean() / strat_df['return'].std() * np.sqrt(252/hold_days)
-        else:
-            sharpe = np.nan
-        # Max drawdown
+        # Calculate and store cumulative PnL curve for this holding period
         equity_curve = strat_df.sort_values('exit_date').set_index('exit_date')['net_pnl'].cumsum()
-        roll_max = equity_curve.cummax()
-        plt.figure(figsize=(10, 5))
+        sweep_pnls[hold_days] = equity_curve
+        sweep_results.extend(strat_results)
+
+        # Optionally, save individual curve plot
+        if save_fig:
+            plt.figure(figsize=(10, 5))
+            plt.plot(equity_curve.index, equity_curve.values, label=f'{hold_days} days')
+            plt.title(f'Cumulative Net P&L ({hold_days}-Day Hold)')
+            plt.ylabel('USD')
+            plt.xlabel('Date')
+            plt.legend()
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(f"results/figures/sweep/holding_period_{hold_days}d_cum_pnl.png")
+            plt.close()
+
+    # Plot all curves on one summary plot
+    plt.figure(figsize=(12, 6))
     for hold_days, curve in sweep_pnls.items():
         plt.plot(curve.index, curve.values, label=f'{hold_days} days')
-    plt.title('Cumulative Net P&L by Holding Period')
+    plt.title('Cumulative Net P&L by Holding Period (Sweep)')
     plt.ylabel('USD')
     plt.xlabel('Date')
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
     if save_fig:
-        plt.savefig("results/figures/holding_period_sweep_cum_pnl.png")
+        plt.savefig("results/figures/sweep/holding_period_sweep_cum_pnl.png")
     if show_fig:
         plt.show()
-    plt.close()    
+    plt.close()
+
+    # Return DataFrame and the dict of curves
     return pd.DataFrame(sweep_results), sweep_pnls
