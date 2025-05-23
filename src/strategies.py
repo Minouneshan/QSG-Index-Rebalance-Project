@@ -1,13 +1,14 @@
 # src/strategies.py
-
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import sharpe_ratio, max_drawdown
 
+os.makedirs("results/figures", exist_ok=True)
 
 # ===== 1. Post-Announcement Momentum =====
-def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01):
+def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01, save_fig=True, show_fig=False):
     results = []
     for idx, row in events.iterrows():
         ticker = row['Yahoo_Ticker']
@@ -66,12 +67,20 @@ def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01):
 
     bt['exit_date'] = pd.to_datetime(bt['exit_date'])
     bt_grouped = bt.groupby('exit_date')['net_pnl'].sum().sort_index().cumsum()
-    bt_grouped.plot(title='Cumulative Net P&L (Post-Announcement Momentum)', ylabel='USD')
-    plt.show()
+    bt_grouped.plot(
+        title='Cumulative Net P&L (Post-Announcement Momentum)', 
+        ylabel='USD', xlabel='Date', grid=True, legend=False, figsize=(10,4)
+    )
+    plt.tight_layout()
+    if save_fig:
+        plt.savefig("results/figures/post_announcement_momentum_pnl.png")
+    if show_fig:
+        plt.show()
+    plt.close()
     return bt
 
 # ===== 2. Event Day Reversion =====
-def event_day_reversion(events, price, threshold=0.001, max_usd=250000, tran_cost=0.01):
+def event_day_reversion(events, price, threshold=0.001, max_usd=250000, tran_cost=0.01, save_fig=True, show_fig=False):
     reversion_results = []
     for idx, row in events.iterrows():
         ticker = row['Yahoo_Ticker']
@@ -144,12 +153,20 @@ def event_day_reversion(events, price, threshold=0.001, max_usd=250000, tran_cos
     print(f"Number of trades: {len(rv)}")
     rv['event_date'] = pd.to_datetime(rv['event_date'])
     rv_grouped = rv.groupby('event_date')['net_pnl'].sum().sort_index().cumsum()
-    rv_grouped.plot(title='Cumulative Net P&L (Event Day Reversion)', ylabel='USD')
-    plt.show()
+    rv_grouped.plot(
+        title='Cumulative Net P&L (Event Day Reversion)', 
+        ylabel='USD', xlabel='Date', grid=True, legend=False, figsize=(10,4)
+    )
+    plt.tight_layout()
+    if save_fig:
+        plt.savefig("results/figures/event_day_reversion_pnl.png")
+    if show_fig:
+        plt.show()
+    plt.close()
     return rv
 
 # ===== 3. Buy-and-Hold Announcement to Trade Date =====
-def buy_and_hold(events, price, max_usd=250000, tran_cost=0.01):
+def buy_and_hold(events, price, max_usd=250000, tran_cost=0.01, save_fig=True, show_fig=False):
     hold_results = []
     for idx, row in events.iterrows():
         ticker = row['Yahoo_Ticker']
@@ -203,12 +220,20 @@ def buy_and_hold(events, price, max_usd=250000, tran_cost=0.01):
 
     hold_df['exit_date'] = pd.to_datetime(hold_df['exit_date'])
     hold_grouped = hold_df.groupby('exit_date')['net_pnl'].sum().sort_index().cumsum()
-    hold_grouped.plot(title='Cumulative Net P&L (Buy-and-Hold)', ylabel='USD')
-    plt.show()
+    hold_grouped.plot(
+        title='Cumulative Net P&L (Buy-and-Hold)', 
+        ylabel='USD', xlabel='Date', grid=True, legend=False, figsize=(10,4)
+    )
+    plt.tight_layout()
+    if save_fig:
+        plt.savefig("results/figures/buy_and_hold_pnl.png")
+    if show_fig:
+        plt.show()
+    plt.close()
     return hold_df
 
 # ===== 4. Hedged Momentum Strategy (Pro-Rata Allocation) =====
-def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.01, hold_days=5, fed_funds_rate=0.053):
+def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.01, hold_days=5, fed_funds_rate=0.053, save_fig=True, show_fig=False):
     results = []
     CARRY_LONG = fed_funds_rate + 0.015
     for idx, row in events.iterrows():
@@ -278,12 +303,20 @@ def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.0
 
     df['exit_date'] = pd.to_datetime(df['exit_date'])
     df_grouped = df.groupby('exit_date')['net_pnl'].sum().sort_index().cumsum()
-    df_grouped.plot(title=f'Cumulative Net P&L (Hedged, {hold_days}-Day Hold)', ylabel='USD')
-    plt.show()
+    df_grouped.plot(
+        title=f'Cumulative Net P&L (Hedged, {hold_days}-Day Hold)', 
+        ylabel='USD', xlabel='Date', grid=True, legend=False, figsize=(10,4)
+    )
+    plt.tight_layout()
+    if save_fig:
+        plt.savefig(f"results/figures/hedged_momentum_{hold_days}d_pnl.png")
+    if show_fig:
+        plt.show()
+    plt.close()
     return df
 
 # ===== 5. Holding Period Sweep =====
-def holding_period_sweep(events, price, spy, min_days=1, max_days=10, portfolio_size=5_000_000, tran_cost=0.01, fed_funds_rate=0.05):
+def holding_period_sweep(events, price, spy, min_days=1, max_days=10, portfolio_size=5_000_000, tran_cost=0.01, fed_funds_rate=0.05, save_fig=True, show_fig=False):
     sweep_results = []
     sweep_pnls = {}
     for hold_days in range(min_days, max_days+1):
@@ -357,3 +390,18 @@ def holding_period_sweep(events, price, spy, min_days=1, max_days=10, portfolio_
         # Max drawdown
         equity_curve = strat_df.sort_values('exit_date').set_index('exit_date')['net_pnl'].cumsum()
         roll_max = equity_curve.cummax()
+        plt.figure(figsize=(10, 5))
+    for hold_days, curve in sweep_pnls.items():
+        plt.plot(curve.index, curve.values, label=f'{hold_days} days')
+    plt.title('Cumulative Net P&L by Holding Period')
+    plt.ylabel('USD')
+    plt.xlabel('Date')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    if save_fig:
+        plt.savefig("results/figures/holding_period_sweep_cum_pnl.png")
+    if show_fig:
+        plt.show()
+    plt.close()    
+    return pd.DataFrame(sweep_results), sweep_pnls
