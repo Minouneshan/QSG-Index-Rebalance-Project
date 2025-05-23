@@ -7,7 +7,7 @@ This repository contains the full solution and analysis for the Quantitative Tra
 Throughout the year, major indexes add, remove, and update holdings. These index rebalancing events are often anticipated, creating temporary liquidity and price inefficiencies that traders can exploit. This project analyzes a dataset of index events since May 2022 and explores several systematic trading strategies around these events.
 
 ##  Repository Structure
-
+<pre> ``` 
 QSG-Index-Rebalance-Project/
 │
 ├── data/           # Raw and cleaned data files (e.g., Excel event list)
@@ -17,7 +17,7 @@ QSG-Index-Rebalance-Project/
 ├── report/         # Final write-up/report (Markdown or PDF)
 ├── requirements.txt# Python dependencies
 └── README.md       # This file
-
+``` </pre>
 
 ## Strategies Implemented
 
