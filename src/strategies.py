@@ -9,7 +9,14 @@ from utils import sharpe_ratio, max_drawdown, sortino_ratio, win_rate, save_summ
 os.makedirs("results/figures", exist_ok=True)
 
 # ===== 1. Post-Announcement Momentum =====
-def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01, save_fig=True, show_fig=False):
+def post_announcement_momentum(
+    events, price, 
+    hold_days=None,        # <-- None means default behavior, else # of days after entry
+    max_usd=250_000, 
+    tran_cost=0.01, 
+    save_fig=True, 
+    show_fig=False
+):
     """
     Implements post-announcement momentum strategy.
     Satisfies assignment requirements:
@@ -22,18 +29,22 @@ def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01, sa
     """
     results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0}
-
     for idx, row in events.iterrows():
         ticker = row['Yahoo_Ticker']
         entry_date = row['first_tradable']
-        exit_date = row['Trade Date'] - pd.Timedelta(days=1)
+        if hold_days is not None:
+            exit_date = entry_date + pd.Timedelta(days=hold_days-1)
+            # Make sure we never go past the Trade Date minus one day!
+            if exit_date > row['Trade Date'] - pd.Timedelta(days=1):
+                exit_date = row['Trade Date'] - pd.Timedelta(days=1)
+        else:
+            exit_date = row['Trade Date'] - pd.Timedelta(days=1)
         try:
             entry = price.loc[(entry_date, ticker)]
             exit_ = price.loc[(exit_date, ticker)]
         except KeyError:
             exclusions['no_price'] += 1
             continue
-
         adv = entry.get('ADV20', np.nan)
         if np.isnan(adv) or adv <= 0:
             exclusions['illiquid'] += 1
@@ -44,15 +55,12 @@ def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01, sa
         if size_shares < 1:
             exclusions['too_small'] += 1
             continue
-
         gross_pnl = (px_close - px_open) * size_shares
         total_cost = tran_cost * size_shares * 2
         net_pnl = gross_pnl - total_cost
         ret = net_pnl / (px_open * size_shares)
-
         results.append({
             'ticker': ticker,
-            'announced': row['Announced'],
             'entry_date': entry_date,
             'exit_date': exit_date,
             'entry_open': px_open,
@@ -64,7 +72,6 @@ def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01, sa
             'usd_invested': px_open * size_shares,
             'trade_days': (exit_date - entry_date).days + 1,
         })
-
     bt = pd.DataFrame(results)
     print("\n=== Post-Announcement Momentum Results ===")
     if bt.empty:
@@ -113,17 +120,33 @@ def post_announcement_momentum(events, price, max_usd=250000, tran_cost=0.01, sa
     return bt, summary 
 
 # ===== 2. Event Day Reversion =====
-def event_day_reversion(events, price, threshold=0.001, max_usd=250_000, tran_cost=0.01, save_fig=True, show_fig=False):
+def event_day_reversion(
+    events, price, 
+    threshold=0.001, 
+    hold_days=None,             # NEW PARAM
+    max_usd=250_000, 
+    tran_cost=0.01, 
+    save_fig=True, 
+    show_fig=False
+):
     reversion_results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0, 'missing_spy': 0}
     for idx, row in events.iterrows():
         ticker = row['Yahoo_Ticker']
         event_date = row['Trade Date']
+        entry_date = event_date
+        # If holding longer than event day, update exit date
+        if hold_days is not None:
+            exit_date = entry_date + pd.Timedelta(days=hold_days-1)
+        else:
+            exit_date = entry_date
+
         try:
-            stk_row = price.loc[(event_date, ticker)]
-            adv = stk_row.get('ADV20', np.nan)
-            stk_open = stk_row['Open']
-            stk_close = stk_row['Close']
+            stk_entry = price.loc[(entry_date, ticker)]
+            stk_exit = price.loc[(exit_date, ticker)]
+            adv = stk_entry.get('ADV20', np.nan)
+            stk_open = stk_entry['Open']
+            stk_close = stk_exit['Close']
             spy_open = row.get('spy_open', np.nan)
             spy_close = row.get('spy_close', np.nan)
             if pd.isna(spy_open) or pd.isna(spy_close):
@@ -132,29 +155,35 @@ def event_day_reversion(events, price, threshold=0.001, max_usd=250_000, tran_co
         except KeyError:
             exclusions['no_price'] += 1
             continue
+
         if np.isnan(adv) or adv <= 0:
             exclusions['illiquid'] += 1
             continue
+
         stk_ret = (stk_close - stk_open) / stk_open
         spy_ret = (spy_close - spy_open) / spy_open
         perf_delta = stk_ret - spy_ret
+
         if perf_delta > threshold:
             direction = -1
         elif perf_delta < -threshold:
             direction = 1
         else:
             continue
+
         size_shares = min(int(max_usd / stk_open), int(0.01 * adv))
         if size_shares < 1:
             exclusions['too_small'] += 1
             continue
+
         gross_pnl = direction * (stk_close - stk_open) * size_shares
         total_cost = tran_cost * size_shares * 2
         net_pnl = gross_pnl - total_cost
         ret = net_pnl / (stk_open * size_shares)
         reversion_results.append({
             'ticker': ticker,
-            'event_date': event_date,
+            'event_date': entry_date,
+            'exit_date': exit_date,
             'direction': direction,
             'stk_open': stk_open,
             'stk_close': stk_close,
@@ -166,6 +195,7 @@ def event_day_reversion(events, price, threshold=0.001, max_usd=250_000, tran_co
             'net_pnl': net_pnl,
             'return': ret,
             'usd_invested': stk_open * size_shares,
+            'trade_days': (exit_date - entry_date).days + 1,
         })
     rv = pd.DataFrame(reversion_results)
     total_pnl = rv['net_pnl'].sum()
@@ -184,31 +214,31 @@ def event_day_reversion(events, price, threshold=0.001, max_usd=250_000, tran_co
         "num_trades": len(rv),
         "exclusions": exclusions,
     }
-    # PRINT summary for logs
     print(f"SUMMARY: {summary}")
     save_summary(summary, "event_day_reversion")
 
-    # [plotting section ...]
-    if not rv.empty:
-        rv['event_date'] = pd.to_datetime(rv['event_date'])
-        rv_grouped = rv.groupby('event_date')['net_pnl'].sum().sort_index().cumsum()
-        rv_grouped.plot(title='Cumulative Net P&L (Event Day Reversion)', ylabel='USD', xlabel='Date', grid=True, legend=False, figsize=(10,4))
-        plt.tight_layout()
-        if save_fig:
-            plt.savefig("results/figures/event_day_reversion_pnl.png")
-        if show_fig:
-            plt.show()
-        plt.close()
-    return rv, summary
-
 # ===== 3. Buy-and-Hold Announcement to Trade Date =====
-def buy_and_hold(events, price, max_usd=250_000, tran_cost=0.01, save_fig=True, show_fig=False):
+def buy_and_hold(
+    events, price, 
+    entry_lag=0,        # days after announcement before entering trade
+    hold_days=None,     # number of days to hold (None means "to Trade Date")
+    max_usd=250_000, 
+    tran_cost=0.01, 
+    save_fig=True, 
+    show_fig=False
+):
     hold_results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0}
     for idx, row in events.iterrows():
         ticker = row['Yahoo_Ticker']
-        entry_date = row['first_tradable']
-        exit_date = row['Trade Date']
+        entry_date = row['first_tradable'] + pd.Timedelta(days=entry_lag)
+        # Set exit date
+        if hold_days is not None:
+            exit_date = entry_date + pd.Timedelta(days=hold_days-1)
+            if exit_date > row['Trade Date']:
+                exit_date = row['Trade Date']
+        else:
+            exit_date = row['Trade Date']
         try:
             entry = price.loc[(entry_date, ticker)]
             exit_ = price.loc[(exit_date, ticker)]
@@ -259,11 +289,8 @@ def buy_and_hold(events, price, max_usd=250_000, tran_cost=0.01, save_fig=True, 
         "num_trades": len(hold_df),
         "exclusions": exclusions,
     }
-    # PRINT summary for logs
     print(f"SUMMARY: {summary}")
     save_summary(summary, "buy_and_hold")
-
-    # [plotting section ...]
     if not hold_df.empty:
         hold_df['exit_date'] = pd.to_datetime(hold_df['exit_date'])
         hold_grouped = hold_df.groupby('exit_date')['net_pnl'].sum().sort_index().cumsum()
@@ -277,10 +304,11 @@ def buy_and_hold(events, price, max_usd=250_000, tran_cost=0.01, save_fig=True, 
     return hold_df, summary
 
 # ===== 4. Hedged Momentum Strategy (Pro-Rata Allocation) =====
-def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.01, hold_days=5, fed_funds_rate=0.053, save_fig=True, show_fig=False):
+def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.01, hold_days=5, fed_funds_rate=0.053, hedge_ratio=1.0, min_adv=1, save_fig=True, show_fig=False):
     results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0, 'no_spy': 0}
     CARRY_LONG = fed_funds_rate + 0.015
+
     for idx, row in events.iterrows():
         ticker = row['Yahoo_Ticker']
         entry_date = row['first_tradable']
@@ -291,8 +319,9 @@ def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.0
         except KeyError:
             exclusions['no_price'] += 1
             continue
+
         adv = entry.get('ADV20', np.nan)
-        if np.isnan(adv) or adv <= 0:
+        if np.isnan(adv) or adv < min_adv:   # use meta-param min_adv
             exclusions['illiquid'] += 1
             continue
         px_open = entry['Open']
@@ -302,21 +331,27 @@ def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.0
         if size_shares < 1:
             exclusions['too_small'] += 1
             continue
+
         stock_notional = px_open * size_shares
         gross_pnl = (px_close - px_open) * size_shares
         total_cost = tran_cost * size_shares * 2
         carry_cost = stock_notional * CARRY_LONG * (hold_days / 365)
-        # SPY Hedge
+
+        # SPY Hedge, using hedge_ratio
         try:
             spy_open = float(spy.loc[spy['Date'] == entry_date, 'spy_open'].iloc[0])
             spy_close = float(spy.loc[spy['Date'] == exit_date, 'spy_close'].iloc[0])
         except (IndexError, KeyError):
             exclusions['no_spy'] += 1
             continue
-        spy_shares = int(stock_notional / spy_open) if not np.isnan(spy_open) and spy_open > 0 else 0
+
+        spy_shares = int(stock_notional * hedge_ratio / spy_open) if spy_open > 0 else 0
         spy_pnl = -spy_shares * (spy_close - spy_open) if spy_shares > 0 and not np.isnan(spy_close) else 0
+
         net_pnl = gross_pnl - total_cost - carry_cost + spy_pnl
         ret = net_pnl / stock_notional if stock_notional > 0 else np.nan
+
+        # Record all meta-params
         results.append({
             'ticker': ticker,
             'entry_date': entry_date,
@@ -326,11 +361,14 @@ def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.0
             'shares': size_shares,
             'gross_pnl': gross_pnl,
             'spy_pnl': spy_pnl,
+            'hedge_ratio': hedge_ratio,   
             'carry_cost': carry_cost,
             'net_pnl': net_pnl,
             'return': ret,
             'usd_invested': stock_notional,
             'trade_days': (exit_date - entry_date).days + 1,
+            'hold_days': hold_days,       
+            'min_adv': min_adv,            
         })
     df = pd.DataFrame(results)
     total_pnl = df['net_pnl'].sum()
@@ -497,3 +535,71 @@ def holding_period_sweep(
 
     # Return: all trades as a DataFrame, summaries, and curves for the notebook/report
     return pd.DataFrame(sweep_results), sweep_summaries, sweep_pnls
+
+
+
+
+def sweep_post_announcement(events, price, hold_periods, **kwargs):
+    sweep_metrics = {}
+    for N in hold_periods:
+        bt, summary = post_announcement_momentum(
+            events, price,
+            hold_days=N,
+            **kwargs
+        )
+        sweep_metrics[N] = summary
+    save_summary(sweep_metrics, "post_announcement_momentum_sweep")
+    return sweep_metrics
+
+
+
+def sweep_event_day_reversion(events, price, thresholds, hold_periods, **kwargs):
+    sweep_metrics = {}
+    for th in thresholds:
+        for N in hold_periods:
+            rv, summary = event_day_reversion(
+                events, price,
+                threshold=th, hold_days=N,  # <-- Add hold_days param
+                **kwargs
+            )
+            sweep_metrics[(th, N)] = summary
+    save_summary(sweep_metrics, "event_day_reversion_sweep")
+    return sweep_metrics
+
+
+
+def sweep_buy_and_hold(events, price, entry_lags, hold_periods, **kwargs):
+    sweep_metrics = {}
+    for lag in entry_lags:
+        for N in hold_periods:
+            bh, summary = buy_and_hold(
+                events, price,
+                entry_lag=lag, hold_days=N,
+                **kwargs
+            )
+            sweep_metrics[(lag, N)] = summary
+    save_summary(sweep_metrics, "buy_and_hold_sweep")
+    return sweep_metrics
+
+
+def sweep_hedged_momentum(
+    events, price, spy,
+    hedge_ratios=[1.0],
+    hold_periods=[5],
+    min_advs=[1],
+    **kwargs
+):
+    sweep_metrics = {}
+    for hr in hedge_ratios:
+        for N in hold_periods:
+            for ma in min_advs:
+                df, summary = hedged_momentum(
+                    events, price, spy,
+                    hedge_ratio=hr,
+                    hold_days=N,
+                    min_adv=ma,
+                    **kwargs
+                )
+                sweep_metrics[(hr, N, ma)] = summary
+    save_summary(sweep_metrics, "hedged_momentum_sweep")
+    return sweep_metrics
