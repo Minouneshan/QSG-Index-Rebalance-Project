@@ -216,6 +216,17 @@ def event_day_reversion(
     }
     print(f"SUMMARY: {summary}")
     save_summary(summary, "event_day_reversion")
+    if not rv.empty:
+        rv['exit_date'] = pd.to_datetime(rv['exit_date'])
+        rv_grouped = rv.groupby('exit_date')['net_pnl'].sum().sort_index().cumsum()
+        rv_grouped.plot(title='Cumulative Net P&L (Event Day Reversion)', ylabel='USD', xlabel='Date', grid=True, legend=False, figsize=(10,4))
+        plt.tight_layout()
+        if save_fig:
+            plt.savefig("results/figures/event_day_reversion_pnl.png")
+        if show_fig:
+            plt.show()
+        plt.close()
+    return rv, summary
 
 # ===== 3. Buy-and-Hold Announcement to Trade Date =====
 def buy_and_hold(
