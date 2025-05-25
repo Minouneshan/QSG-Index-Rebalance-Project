@@ -66,3 +66,37 @@ QSG-Index-Rebalance-Project/
     ```bash
     python src/backtest_strategies.py
     ```
+
+## Modular Code Structure & Approach
+
+| Module                      | Purpose                                                      |
+|-----------------------------|--------------------------------------------------------------|
+| `src/strategies.py`         | Core trading logic: all event trading strategies implemented |
+| `src/sweeps.py`             | Parameter sweeps for strategies                             |
+| `src/optimizer.py`          | ML/grid optimization routines                               |
+| `src/backtest_strategies.py`| Main pipeline: event filtering, running, saving results      |
+| `src/utils.py`, `data_prep.py` | Utilities and data loading/cleaning                      |
+
+The codebase is fully modular and robust, with each component responsible for a specific part of the pipeline:
+
+- `src/strategies.py`: Implements all core trading strategies as functions. Each returns both detailed P&L DataFrames and summary statistics, with robust handling for missing/invalid data.
+- `src/sweeps.py`: Parameter sweep logic for strategies, ensuring all parameter keys are stringified for JSON compatibility. Includes wrappers for scalar parameter sweeps.
+- `src/optimizer.py`: Grid and ML-based optimization routines, with error handling for empty/missing results and wrappers for parameter adaptation.
+- `src/backtest_strategies.py`: Main pipeline for event filtering, parameter casting, running strategies, and saving results. Skips/prints messages for empty or invalid results.
+- `src/utils.py` & `src/data_prep.py`: Utility functions for data loading, cleaning, and common operations.
+
+### Workflow
+1. **Data Preparation:** Load and clean event and price data using `data_prep.py` and `utils.py`.
+2. **Strategy Backtesting:** Run strategies via `backtest_strategies.py`, which calls modular strategy functions implemented in `strategies.py` and handles event filtering and parameter casting.
+3. **Parameter Sweeps & Optimization:** Use `sweeps.py` and `optimizer.py` for systematic parameter exploration and ML-based optimization, all of which ultimately invoke strategy logic from `strategies.py`.
+4. **Results & Reporting:** All results (P&L, summaries, plots) are saved to `results/` and visualized in the Jupyter notebook (`report/QSG Index Rebalance Analysis.ipynb`).
+5. **Notebook:** The notebook summarizes methodology, results, and includes all main equity curve plots, with clear markdown and code cells for reproducibility.
+
+### Robustness & Reproducibility
+- All functions handle missing data and empty results gracefully.
+- Parameter types are validated and cast as needed.
+- All outputs are reproducible and figures are saved for reporting.
+
+---
+
+For further details, see the code comments and the final notebook in `report/`.

@@ -3,3 +3,6 @@ numpy
 yfinance
 matplotlib
 openpyxl
+scikit-learn
+seaborn
+jupyter
