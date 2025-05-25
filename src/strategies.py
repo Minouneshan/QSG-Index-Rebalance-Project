@@ -1,3 +1,28 @@
+"""
+strategies.py
+
+This module implements all core trading strategies for the QSG Index Rebalance Project.
+
+Functionality:
+- Contains modular, robust, and well-documented implementations of all systematic trading strategies required by the assignment:
+    1. Post-Announcement Momentum
+    2. Event Day Reversion
+    3. Buy-and-Hold
+    4. Hedged Momentum
+    5. Holding Period Sweep
+- Each strategy enforces liquidity, transaction cost, and risk management constraints as specified.
+- All strategies track and report exclusions (e.g., missing price, illiquid, too small).
+- Returns detailed trade logs and summary statistics for analysis and reporting.
+- Designed for clarity, extensibility, and reproducibility in a research or production context.
+
+Readability:
+- All functions are self-contained and use clear, descriptive names and docstrings.
+- Results and figures are saved in a structured way for easy reporting.
+- Code is robust to missing data and type errors, with explicit error handling and logging.
+
+This file is part of a modular pipeline, with supporting utilities in utils.py, data_prep.py, and orchestration in backtest_strategies.py.
+"""
+
 # src/strategies.py
 import os
 import pandas as pd
@@ -17,14 +42,19 @@ def post_announcement_momentum(
     show_fig=False
 ):
     """
-    Implements post-announcement momentum strategy.
-    Satisfies assignment requirements:
-        - Liquidity constraint (<=1% ADV)
-        - Transaction cost ($0.01/share)
-        - Entry: Open after announcement; Exit: Day before event
-        - Risk: Returns, Sharpe, Drawdown, etc. computed
-        - All exclusions tracked
-    Returns: DataFrame, summary metrics, exclusions count
+    Implements the post-announcement momentum trading strategy.
+    
+    Parameters:
+        events (pd.DataFrame): Event data with required columns (e.g., Yahoo_Ticker, first_tradable, Trade Date).
+        price (pd.DataFrame): Price data indexed by (date, ticker) with columns Open, Close, ADV20.
+        hold_days (int or None): Number of days to hold after entry. If None, holds until day before Trade Date.
+        max_usd (float): Maximum USD notional per trade.
+        tran_cost (float): Transaction cost per share (in USD).
+        save_fig (bool): Whether to save the P&L figure.
+        show_fig (bool): Whether to display the P&L figure interactively.
+    
+    Returns:
+        tuple: (trades DataFrame, summary metrics dict)
     """
     results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0}
@@ -128,6 +158,22 @@ def event_day_reversion(
     save_fig=True, 
     show_fig=False
 ):
+    """
+    Implements the event day reversion trading strategy.
+    
+    Parameters:
+        events (pd.DataFrame): Event data with required columns (e.g., Yahoo_Ticker, Trade Date, spy_open, spy_close).
+        price (pd.DataFrame): Price data indexed by (date, ticker) with columns Open, Close, ADV20.
+        threshold (float): Minimum performance delta to trigger a trade.
+        hold_days (int or None): Number of days to hold after entry. If None, holds for event day only.
+        max_usd (float): Maximum USD notional per trade.
+        tran_cost (float): Transaction cost per share (in USD).
+        save_fig (bool): Whether to save the P&L figure.
+        show_fig (bool): Whether to display the P&L figure interactively.
+    
+    Returns:
+        tuple: (trades DataFrame, summary metrics dict)
+    """
     reversion_results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0, 'missing_spy': 0}
     for idx, row in events.iterrows():
@@ -240,6 +286,22 @@ def buy_and_hold(
     save_fig=True, 
     show_fig=False
 ):
+    """
+    Implements a buy-and-hold strategy from announcement to trade date (or for a fixed holding period).
+    
+    Parameters:
+        events (pd.DataFrame): Event data with required columns (e.g., Yahoo_Ticker, first_tradable, Trade Date).
+        price (pd.DataFrame): Price data indexed by (date, ticker) with columns Open, Close, ADV20.
+        entry_lag (int): Days after announcement before entering trade.
+        hold_days (int or None): Number of days to hold. If None, holds until Trade Date.
+        max_usd (float): Maximum USD notional per trade.
+        tran_cost (float): Transaction cost per share (in USD).
+        save_fig (bool): Whether to save the P&L figure.
+        show_fig (bool): Whether to display the P&L figure interactively.
+    
+    Returns:
+        tuple: (trades DataFrame, summary metrics dict)
+    """
     hold_results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0}
     for idx, row in events.iterrows():
@@ -321,6 +383,25 @@ def buy_and_hold(
 
 # ===== 4. Hedged Momentum Strategy (Pro-Rata Allocation) =====
 def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.01, hold_days=5, fed_funds_rate=0.053, hedge_ratio=1.0, min_adv=1, save_fig=True, show_fig=False):
+    """
+    Implements a hedged momentum strategy with pro-rata allocation and SPY hedging.
+    
+    Parameters:
+        events (pd.DataFrame): Event data with required columns (e.g., Yahoo_Ticker, first_tradable).
+        price (pd.DataFrame): Price data indexed by (date, ticker) with columns Open, Close, ADV20.
+        spy (pd.DataFrame): SPY price data with columns Date, spy_open, spy_close.
+        portfolio_gross (float): Total portfolio notional to allocate across trades.
+        tran_cost (float): Transaction cost per share (in USD).
+        hold_days (int): Number of days to hold each trade.
+        fed_funds_rate (float): Annualized risk-free rate for carry cost.
+        hedge_ratio (float): Proportion of notional to hedge with SPY.
+        min_adv (float): Minimum ADV20 for liquidity filter.
+        save_fig (bool): Whether to save the P&L figure.
+        show_fig (bool): Whether to display the P&L figure interactively.
+    
+    Returns:
+        tuple: (trades DataFrame, summary metrics dict)
+    """
     results = []
     exclusions = {'no_price': 0, 'illiquid': 0, 'too_small': 0, 'no_spy': 0}
     CARRY_LONG = fed_funds_rate + 0.015
@@ -429,6 +510,24 @@ def holding_period_sweep(
     portfolio_size=5_000_000, tran_cost=0.01, fed_funds_rate=0.05,
     save_fig=True, show_fig=False
 ):
+    """
+    Runs a sweep of holding periods for the hedged momentum strategy, evaluating performance for each period.
+    
+    Parameters:
+        events (pd.DataFrame): Event data with required columns (e.g., Yahoo_Ticker, first_tradable, Trade Date).
+        price (pd.DataFrame): Price data indexed by (date, ticker) with columns Open, Close, ADV20.
+        spy (pd.DataFrame): SPY price data with columns Date, spy_open, spy_close.
+        min_days (int): Minimum holding period to test.
+        max_days (int): Maximum holding period to test.
+        portfolio_size (float): Total portfolio notional to allocate across trades.
+        tran_cost (float): Transaction cost per share (in USD).
+        fed_funds_rate (float): Annualized risk-free rate for carry cost.
+        save_fig (bool): Whether to save the P&L figures.
+        show_fig (bool): Whether to display the P&L figures interactively.
+    
+    Returns:
+        tuple: (all trades DataFrame, dict of summary metrics by holding period, dict of P&L curves)
+    """
     import os
     os.makedirs("results/figures/sweep", exist_ok=True)
     sweep_results = []

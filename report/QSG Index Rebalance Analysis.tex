@@ -406,15 +406,27 @@
     
     
 
-\begin{document}
-    
-    \maketitle
-    
-    
+% --- Formatting and spacing improvements ---
+% Add vertical space before and after section headers
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{1.5em}{1em}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.8em}
+\titlespacing*{\subsubsection}{0pt}{1em}{0.6em}
 
-    
-    \section*{QSG Index Rebalance
-Analysis}\label{qsg-index-rebalance-analysis}
+% Improve itemize indentation and spacing
+\usepackage{enumitem}
+\setlist[itemize]{left=1.5em, itemsep=0.5em, topsep=0.5em}
+
+% Add a bit more space before/after tables and verbatim blocks
+\setlength{\intextsep}{1.2em}
+\setlength{\textfloatsep}{1.2em}
+\setlength{\abovecaptionskip}{0.8em}
+\setlength{\belowcaptionskip}{0.8em}
+
+\begin{document}
+    \maketitle
+
+    \section*{QSG Index Rebalance Analysis}
 
 \textbf{Repository:}
 \url{https://github.com/Minouneshan/QSG-Index-Rebalance-Project}\\
@@ -422,95 +434,32 @@ Analysis}\label{qsg-index-rebalance-analysis}
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-    \subsection*{Table of Contents}\label{table-of-contents}
-
+    \subsection*{Table of Contents}
 \begin{itemize}
-\tightlist
-\item
-  Executive Summary
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \tightlist
-  \item
-    Introduction and Objective
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{1}
-  \tightlist
-  \item
-    Data Sources and Preparation
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{2}
-  \tightlist
-  \item
-    Strategy Design and Implementation
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{3}
-  \tightlist
-  \item
-    Parameter Sweeps and Optimization
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{4}
-  \tightlist
-  \item
-    Results: Performance Metrics and Analysis
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{5}
-  \tightlist
-  \item
-    Risk Management and Portfolio Constraints
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{6}
-  \tightlist
-  \item
-    Decision-Making Process and Assumptions
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{7}
-  \tightlist
-  \item
-    Tools and Technical Implementation
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{8}
-  \tightlist
-  \item
-    Conclusions and Recommendations
-  \end{enumerate}
+  \item Executive Summary
+  \item Introduction and Objective
+  \item Data Sources and Preparation
+  \item Strategy Design and Implementation
+  \item Parameter Sweeps and Optimization
+  \item Results: Performance Metrics and Analysis
+  \item Risk Management and Portfolio Constraints
+  \item Decision-Making Process and Assumptions
+  \item Tools and Technical Implementation
+  \item Conclusions and Recommendations
 \end{itemize}
 
-    \subsection*{Executive Summary}\label{executive-summary}
+    \subsection*{Executive Summary}
 
 This report presents a robust, modular pipeline for backtesting and
 optimizing index event trading strategies, focused on S\&P 400/500/600
-additions. The best-performing strategy is Buy-and-Hold (entry lag=1,
-hold\_days=5), delivering the highest Sharpe and net PnL. Hedged
-Momentum strategies reduce risk but also lower returns. All results are
-robust to missing data, liquidity constraints, and transaction/overnight
-costs. Practical recommendations include focusing on momentum-based
-approaches and refining mean reversion logic.
+additions. The best-performing strategy is Buy-and-Hold (entry lag=3,
+hold\_days=5), delivering the highest Sharpe (3.52) and net PnL
+(\$283,726). Post-Announcement Momentum is positive but lower Sharpe.
+Hedged Momentum and Event Day Reversion strategies did not outperform
+and, in the best parameter sweeps, produced negative or low Sharpe
+ratios. All results are robust to missing data, liquidity constraints,
+and transaction/overnight costs. Practical recommendations include
+focusing on momentum-based approaches and refining mean reversion logic.
 
     \textbf{Quantitative Trader Candidate Project --- Quantitative
 Strategies Group (QSG)}
@@ -522,8 +471,7 @@ It covers data preparation, strategy logic, parameter sweeps, risk
 management, and performance analysis, with all code and results fully
 reproducible.
 
-    \subsubsection*{1. Introduction and
-Objective}\label{introduction-and-objective}
+    \subsection*{Introduction and Objective}
 
 \textbf{Objective:}\\
 Analyze index addition events for S\&P indices since May 2022 to
@@ -538,10 +486,9 @@ Reversion, Buy-and-Hold, Hedged Momentum. - Explore holding periods,
 risk management, and hedging. - Apply liquidity and execution
 constraints. - Document all steps, code, and results.
 
-    \subsubsection*{2. Data Sources and
-Preparation}\label{data-sources-and-preparation}
+    \subsection*{Data Sources and Preparation}
 
-\subsection*{2.1. Event Data}\label{event-data}
+\textbf{2.1. Event Data}
 
 \begin{itemize}
 \tightlist
@@ -553,7 +500,7 @@ Preparation}\label{data-sources-and-preparation}
   \texttt{Trade\ Date}, \texttt{Ticker}.
 \end{itemize}
 
-\subsection*{2.2. Price Data}\label{price-data}
+\textbf{2.2. Price Data}
 
 \begin{itemize}
 \tightlist
@@ -566,7 +513,7 @@ Preparation}\label{data-sources-and-preparation}
   All prices are adjusted for splits/dividends.
 \end{itemize}
 
-\subsection*{2.3. Data Cleaning and Filtering}\label{data-cleaning-and-filtering}
+\textbf{2.3. Data Cleaning and Filtering}
 
 \begin{itemize}
 \tightlist
@@ -626,11 +573,9 @@ prices, matching assignment requirements.
     \end{Verbatim}
 
     
-    \subsubsection*{3. Strategy Design and
-Implementation}\label{strategy-design-and-implementation}
+    \subsection*{Strategy Design and Implementation}
 
-\subsection*{3.1. Post-Announcement
-Momentum}\label{post-announcement-momentum}
+\textbf{3.1. Post-Announcement Momentum}
 
 \begin{itemize}
 \tightlist
@@ -641,7 +586,7 @@ Momentum}\label{post-announcement-momentum}
   for optimal holding period).
 \end{itemize}
 
-\subsection*{3.2. Event Day Reversion}\label{event-day-reversion}
+\textbf{3.2. Event Day Reversion}
 
 \begin{itemize}
 \tightlist
@@ -652,7 +597,7 @@ Momentum}\label{post-announcement-momentum}
   Exit after a parameterized holding period.
 \end{itemize}
 
-\subsection*{3.3. Buy-and-Hold}\label{buy-and-hold}
+\textbf{3.3. Buy-and-Hold}
 
 \begin{itemize}
 \tightlist
@@ -661,7 +606,7 @@ Momentum}\label{post-announcement-momentum}
   sweep for entry lag and holding days).
 \end{itemize}
 
-\subsection*{3.4. Hedged Momentum}\label{hedged-momentum}
+\textbf{3.4. Hedged Momentum}
 
 \begin{itemize}
 \tightlist
@@ -672,8 +617,7 @@ Momentum}\label{post-announcement-momentum}
   Parameters: hedge ratio, holding period, ADV filter.
 \end{itemize}
 
-\subsection*{3.5. Parameter Sweeps and
-Optimization}\label{parameter-sweeps-and-optimization}
+\textbf{3.5. Parameter Sweeps and Optimization}
 
 \begin{itemize}
 \tightlist
@@ -685,8 +629,7 @@ Optimization}\label{parameter-sweeps-and-optimization}
   Results are robust to missing data and type errors.
 \end{itemize}
 
-\subsection*{3.6. Risk Management and
-Constraints}\label{risk-management-and-constraints}
+\textbf{3.6. Risk Management and Constraints}
 
 \begin{itemize}
 \tightlist
@@ -704,8 +647,7 @@ Constraints}\label{risk-management-and-constraints}
   Hedging: SPY used for all relevant strategies.
 \end{itemize}
 
-\subsection*{3.7. Code Structure and
-Organization}\label{code-structure-and-organization}
+\textbf{3.7. Code Structure and Organization}
 
 \begin{itemize}
 \tightlist
@@ -728,11 +670,9 @@ Organization}\label{code-structure-and-organization}
   structure.
 \end{itemize}
 
-\subsubsection*{4. Parameter Sweeps and
-Optimization}\label{parameter-sweeps-and-optimization-1}
+\subsubsection*{4. Parameter Sweeps and Optimization}
 
-\paragraph{\texorpdfstring{Why use
-\texttt{sweeps.py}?}{Why use sweeps.py?}}\label{why-use-sweeps.py}
+\textbf{Why use \texttt{sweeps.py}?}
 
 \begin{itemize}
 \tightlist
@@ -755,8 +695,7 @@ Optimization}\label{parameter-sweeps-and-optimization-1}
   maintainability.
 \end{itemize}
 
-\paragraph{Backtest and Optimizer
-Design}\label{backtest-and-optimizer-design}
+\textbf{Backtest and Optimizer Design}
 
 \begin{itemize}
 \tightlist
@@ -770,9 +709,9 @@ Design}\label{backtest-and-optimizer-design}
   and reproducibility.
 \end{itemize}
 
-\section*{5. Results: Performance Metrics and Analysis}
-\subsection*{5.1. Summary Table of Best Strategies}
-\label{summary-table-of-best-strategies}
+\subsubsection*{5. Results: Performance Metrics and Analysis}
+
+\textbf{5.1. Summary Table of Best Strategies}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2523}}
@@ -801,27 +740,28 @@ Max Drawdown
 \endlastfoot
 Post-Announcement Mom. & hold\_days=2 & 1.96 & \$77,747 & 94 &
 \$90,509 \\
-Event Day Reversion & threshold=0.001, hold\_days=4 & -10.90 &
--\$598,159 & 78 & \$585,939 \\
-Buy-and-Hold & entry\_lag=1, hold\_days=5 & 5.30 & \$242,803 & 63 &
-\$29,224 \\
-Hedged Momentum & hedge\_ratio=0.5, hold\_days=6, min\_adv=5 & 1.54 &
-\$23,461 & 55 & \$6,696 \\
+Event Day Reversion & threshold=0.01, hold\_days=5 & -12.47 & -\$666,412
+& 80 & \$619,241 \\
+Buy-and-Hold & entry\_lag=3, hold\_days=5 & 3.52 & \$283,726 & 89 &
+\$93,842 \\
+Hedged Momentum & hedge\_ratio=1.0, hold\_days=7, min\_adv=10 & -0.77 &
+-\$188 & 110 & \$46,442 \\
 \end{longtable}
 
-\textbf{Notes:} - Buy-and-Hold is the best performing model by Sharpe
-and net PnL. - Event Day Reversion is highly negative and should be
-reviewed or excluded. - All metrics are based on out-of-sample backtests
-with full transaction and carry costs.
+\textbf{Notes:} - Buy-and-Hold (entry\_lag=3, hold\_days=5) is the best
+performing model by Sharpe and net PnL. - Event Day Reversion is highly
+negative and should be reviewed or excluded. - Hedged Momentum did not
+outperform in the best parameter sweep. - All metrics are based on
+out-of-sample backtests with full transaction and carry costs.
 
 \textbf{Hedge Impact Analysis:}
 
 A direct comparison of hedged vs.~unhedged strategies shows that hedging
 with SPY reduces portfolio volatility and drawdowns but also lowers
 total returns. The Buy-and-Hold strategy (unhedged) achieved the highest
-Sharpe and net PnL, while Hedged Momentum provided risk reduction at the
-cost of lower returns. This trade-off should be considered when
-designing live trading strategies.
+Sharpe and net PnL, while Hedged Momentum did not outperform in this
+sample. This trade-off should be considered when designing live trading
+strategies.
 
     \begin{Verbatim}[commandchars=\\\{\}]
 Post-Announcement Momentum: \{'total\_net\_pnl': 77746.69332015992, 'avg\_return':
@@ -848,12 +788,11 @@ Hedged Momentum: \{'total\_net\_pnl': 23461.006244715747, 'avg\_return':
     \end{Verbatim}
 
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{QSG Index Rebalance Analysis_files/QSG Index Rebalance Analysis_9_0.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{../results/figures/buy_and_hold_pnl.png}
     \end{center}
     { \hspace*{\fill} \\}
     
-    \subsubsection*{6. Risk Management and Portfolio
-Constraints}\label{risk-management-and-portfolio-constraints}
+    \subsubsection*{6. Risk Management and Portfolio Constraints}
 
 \begin{itemize}
 \tightlist
@@ -880,8 +819,7 @@ liquidity constraints. - Hedging reduces market risk but may reduce
 returns. - Event Day Reversion strategy performed poorly, highlighting
 the risk of mean reversion trades around index events.
 
-\subsubsection*{7. Decision-Making Process and
-Assumptions}\label{decision-making-process-and-assumptions}
+\subsubsection*{7. Decision-Making Process and Assumptions}
 
 \begin{itemize}
 \tightlist
@@ -938,8 +876,7 @@ Assumptions}\label{decision-making-process-and-assumptions}
   \end{itemize}
 \end{itemize}
 
-\subsubsection*{8. Tools and Technical
-Implementation}\label{tools-and-technical-implementation}
+\subsubsection*{8. Tools and Technical Implementation}
 
 \begin{itemize}
 \tightlist
@@ -976,13 +913,12 @@ Implementation}\label{tools-and-technical-implementation}
   \end{itemize}
 \end{itemize}
 
-\subsubsection*{9. Conclusions and
-Recommendations}\label{conclusions-and-recommendations}
+\subsubsection*{9. Conclusion}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Best Strategy:} Buy-and-Hold (entry lag=1, hold\_days=5)
+  \textbf{Best Strategy:} Buy-and-Hold (entry lag=3, hold\_days=5)
   delivered the highest Sharpe and net PnL.
 \item
   \textbf{Hedging:} Hedged Momentum provided risk reduction but lower
@@ -993,18 +929,7 @@ Recommendations}\label{conclusions-and-recommendations}
 \item
   \textbf{Robustness:} The pipeline is robust, modular, and easy to
   extend for new strategies or data.
-\item
-  \textbf{Next Steps:}
 
-  \begin{itemize}
-  \tightlist
-  \item
-    Explore alternative hedges (sector ETFs, cointegrated pairs).
-  \item
-    Refine mean reversion logic or focus on momentum-based approaches.
-  \item
-    Consider more granular liquidity and risk controls for live trading.
-  \end{itemize}
 \end{itemize}
 
 

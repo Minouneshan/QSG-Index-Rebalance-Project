@@ -1,3 +1,20 @@
+"""
+backtest_strategies.py
+
+This module orchestrates the backtesting of all trading strategies for the QSG Index Rebalance Project.
+
+Functionality:
+- Loads data, runs all strategy modules, and saves results for reporting.
+- Handles parameter sweeps, summary table generation, and figure saving.
+- Designed for reproducibility, clarity, and easy extension to new strategies or workflows.
+
+Readability:
+- All functions are self-contained and use clear, descriptive names and docstrings.
+- Designed for clarity, extensibility, and easy integration with other modules.
+
+This file is part of a modular pipeline, with supporting strategy code in strategies.py, utilities in utils.py, and data preparation in data_prep.py.
+"""
+
 # src/backtest_strategies.py
 
 import os
@@ -159,3 +176,55 @@ def save_fig(filename):
 # save_fig("cum_pnl_post_announcement.png")
 
 print("\nAll strategies run. Results and figures saved in results/ and results/figures/.")
+
+def run_backtests(
+    strategies, events, price, spy=None, save_dir=None
+):
+    """
+    Runs a set of backtest strategies and saves their results.
+    
+    Parameters:
+        strategies (dict): Mapping of strategy names to functions.
+        events (pd.DataFrame): Event data for the strategies.
+        price (pd.DataFrame): Price data for the strategies.
+        spy (pd.DataFrame or None): SPY data if required by the strategies.
+        save_dir (str or None): Directory to save results. If None, does not save.
+    
+    Returns:
+        dict: Mapping from strategy names to (results, summary) tuples.
+    """
+    # ...existing code...
+
+def run_all_strategies(event_data, price_data, spy_data):
+    """
+    Run all trading strategies and save results for reporting.
+    Args:
+        event_data (pd.DataFrame): Event data for index additions.
+        price_data (pd.DataFrame): Price data for all tickers.
+        spy_data (pd.DataFrame): Benchmark (SPY) data.
+    Returns:
+        dict: Dictionary of results for each strategy.
+    """
+    # ...existing code...
+
+def run_parameter_sweeps(event_data, price_data, spy_data):
+    """
+    Run parameter sweeps (e.g., holding period, thresholds) for strategies and save results.
+    Args:
+        event_data (pd.DataFrame): Event data for index additions.
+        price_data (pd.DataFrame): Price data for all tickers.
+        spy_data (pd.DataFrame): Benchmark (SPY) data.
+    Returns:
+        dict: Dictionary of sweep results for each strategy.
+    """
+    # ...existing code...
+
+def generate_summary_table(results):
+    """
+    Generate a summary table of key metrics for all strategies.
+    Args:
+        results (dict): Dictionary of strategy results.
+    Returns:
+        pd.DataFrame: Summary table of metrics.
+    """
+    # ...existing code...

@@ -12,9 +12,9 @@ QSG-Index-Rebalance-Project/
 │
 ├── data/           # Raw and cleaned data files (e.g., Excel event list)
 ├── src/            # All Python scripts for backtesting, data prep, analysis
-├── results/        # Output files (performance stats, tables)
+├── results/        # Output files (performance stats, tables, figures)
 │   └── figures/    # Generated plots and figures
-├── report/         # Final write-up/report (Markdown or PDF)
+├── report/         # Final write-up/report (Notebook and PDF)
 ├── requirements.txt# Python dependencies
 └── README.md       # This file
 ``` </pre>
