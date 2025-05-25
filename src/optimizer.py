@@ -97,6 +97,10 @@ def optimize_with_ml(sweep_func, param_grid, events, price, target_metric='sharp
             results.append(row)
     df = pd.DataFrame(results)
     param_cols = [c for c in df.columns if c.startswith('param') or c in param_grid]
+    # Robustness: Check for empty DataFrame or missing/invalid target metric
+    if df.empty or target_metric not in df.columns or df[target_metric].isnull().all():
+        print(f"No valid results or '{target_metric}' metric found in sweep. Check your data and strategy filters.")
+        return {}, None, df, None
     X = df[param_cols].values
     y = df[target_metric].values
     if model is None:

@@ -29,8 +29,17 @@ price = download_price_data(tickers)
 price = calc_adv(price)
 
 # Only keep events with price data available
-downloaded_tickers = set(price.index.get_level_values('Date').unique())
+# FIX: Use Ticker, not Date, to filter events
+if 'Ticker' in price.index.names:
+    downloaded_tickers = set(price.index.get_level_values('Ticker').unique())
+else:
+    # fallback for legacy code, try second level
+    downloaded_tickers = set(price.index.get_level_values(1).unique())
 events = events[events['Yahoo_Ticker'].isin(downloaded_tickers)]
+
+# Further filter: Only keep events where we have price data for the ticker on the event date
+available_pairs = set(price.index)
+events = events[events.apply(lambda row: (row['Trade Date'], row['Yahoo_Ticker']) in available_pairs, axis=1)]
 
 # ===== 2. Load SPY =====
 spy_df = yf.download(
@@ -67,7 +76,8 @@ hold_periods = list(range(1, 11))
 best_params_pa, best_score_pa, _, _ = optimize_post_announcement(events, price, hold_periods, target_metric='sharpe')
 print(f"Best Post-Announcement params: {best_params_pa}, Sharpe: {best_score_pa}")
 if best_params_pa and 'hold_days' in best_params_pa:
-    bt, bt_summary = post_announcement_momentum(events, price, hold_days=best_params_pa['hold_days'], save_fig=True, show_fig=False)
+    hold_days = int(best_params_pa['hold_days'])
+    bt, bt_summary = post_announcement_momentum(events, price, hold_days=hold_days, save_fig=True, show_fig=False)
     bt.to_csv("results/post_announcement_momentum.csv", index=False)
 else:
     print("Skipping Post-Announcement Momentum: No optimal parameters found or no trades generated.")
@@ -75,39 +85,56 @@ else:
 # 2. Optimize and run Event Day Reversion
 print(">>> Optimizing Event Day Reversion Parameters...")
 from sweeps import sweep_event_day_reversion
-param_grid_edr = {'thresholds': [[0.001, 0.002, 0.005, 0.01]], 'hold_periods': [list(range(1, 6))]}
-best_params_edr, best_score_edr, _, _ = optimize_with_ml(sweep_event_day_reversion, param_grid_edr, events, price, target_metric='sharpe')
+# Wrapper to adapt scalar params to sweep signature
+def sweep_event_day_reversion_scalar(events, price, threshold, hold_days, **kwargs):
+    return sweep_event_day_reversion(events, price, thresholds=[threshold], hold_periods=[hold_days], **kwargs)
+# FIX: Use scalar parameter grid, not nested lists
+param_grid_edr = {'threshold': [0.001, 0.002, 0.005, 0.01], 'hold_days': list(range(1, 6))}
+best_params_edr, best_score_edr, _, _ = optimize_with_ml(sweep_event_day_reversion_scalar, param_grid_edr, events, price, target_metric='sharpe')
 print(f"Best Event Day Reversion params: {best_params_edr}, Sharpe: {best_score_edr}")
-if best_params_edr and 'param_0' in best_params_edr and 'param_1' in best_params_edr:
-    rv, rv_summary = event_day_reversion(events, price, threshold=best_params_edr.get('param_0', 0.001), hold_days=best_params_edr.get('param_1', 1), save_fig=True, show_fig=False)
+if best_params_edr and 'threshold' in best_params_edr and 'hold_days' in best_params_edr:
+    threshold = float(best_params_edr.get('threshold', 0.001))
+    hold_days = int(best_params_edr.get('hold_days', 1))
+    rv, rv_summary = event_day_reversion(events, price, threshold=threshold, hold_days=hold_days, save_fig=True, show_fig=False)
     rv.to_csv("results/event_day_reversion.csv", index=False)
 else:
     print("Skipping Event Day Reversion: No optimal parameters found or no trades generated.")
 
+from sweeps import sweep_buy_and_hold, sweep_hedged_momentum
+# Wrapper to adapt scalar params to sweep signature for buy-and-hold
+def sweep_buy_and_hold_scalar(events, price, entry_lag, hold_days, **kwargs):
+    return sweep_buy_and_hold(events, price, entry_lags=[entry_lag], hold_periods=[hold_days], **kwargs)
+# Wrapper to adapt scalar params to sweep signature for hedged momentum
+def sweep_hedged_momentum_scalar(events, price, hedge_ratio, hold_days, min_adv, **kwargs):
+    return sweep_hedged_momentum(events, price, spy=kwargs.get('spy'), hedge_ratios=[hedge_ratio], hold_periods=[hold_days], min_advs=[min_adv])
+
 # 3. Optimize and run Buy-and-Hold
 print(">>> Optimizing Buy-and-Hold Parameters...")
-from sweeps import sweep_buy_and_hold
-param_grid_bh = {'entry_lags': [[0, 1, 2, 3]], 'hold_periods': [list(range(1, 6))]}
-best_params_bh, best_score_bh, _, _ = optimize_with_ml(sweep_buy_and_hold, param_grid_bh, events, price, target_metric='sharpe')
+param_grid_bh = {'entry_lag': [0, 1, 2, 3], 'hold_days': list(range(1, 6))}
+best_params_bh, best_score_bh, _, _ = optimize_with_ml(sweep_buy_and_hold_scalar, param_grid_bh, events, price, target_metric='sharpe')
 print(f"Best Buy-and-Hold params: {best_params_bh}, Sharpe: {best_score_bh}")
-if best_params_bh and 'param_0' in best_params_bh and 'param_1' in best_params_bh:
-    bh, bh_summary = buy_and_hold(events, price, entry_lag=best_params_bh.get('param_0', 0), hold_days=best_params_bh.get('param_1', 1), save_fig=True, show_fig=False)
+if best_params_bh and 'entry_lag' in best_params_bh and 'hold_days' in best_params_bh:
+    entry_lag = int(best_params_bh.get('entry_lag', 0))
+    hold_days = int(best_params_bh.get('hold_days', 1))
+    bh, bh_summary = buy_and_hold(events, price, entry_lag=entry_lag, hold_days=hold_days, save_fig=True, show_fig=False)
     bh.to_csv("results/buy_and_hold.csv", index=False)
 else:
     print("Skipping Buy-and-Hold: No optimal parameters found or no trades generated.")
 
 # 4. Optimize and run Hedged Momentum
 print(">>> Optimizing Hedged Momentum Parameters...")
-from sweeps import sweep_hedged_momentum
-param_grid_hm = {'hedge_ratios': [[0.5, 1.0]], 'hold_periods': [list(range(3, 8))], 'min_advs': [[1, 5, 10]]}
-best_params_hm, best_score_hm, _, _ = optimize_with_ml(sweep_hedged_momentum, param_grid_hm, events, price, target_metric='sharpe', spy=spy_df)
+param_grid_hm = {'hedge_ratio': [0.5, 1.0], 'hold_days': list(range(3, 8)), 'min_adv': [1, 5, 10]}
+best_params_hm, best_score_hm, _, _ = optimize_with_ml(sweep_hedged_momentum_scalar, param_grid_hm, events, price, target_metric='sharpe', spy=spy_df)
 print(f"Best Hedged Momentum params: {best_params_hm}, Sharpe: {best_score_hm}")
-if best_params_hm and 'param_0' in best_params_hm and 'param_1' in best_params_hm and 'param_2' in best_params_hm:
+if best_params_hm and 'hedge_ratio' in best_params_hm and 'hold_days' in best_params_hm and 'min_adv' in best_params_hm:
+    hedge_ratio = float(best_params_hm.get('hedge_ratio', 1.0))
+    hold_days = int(best_params_hm.get('hold_days', 5))
+    min_adv = int(best_params_hm.get('min_adv', 1))
     hm, hm_summary = hedged_momentum(
         events, price, spy_df,
-        hedge_ratio=best_params_hm.get('param_0', 1.0),
-        hold_days=best_params_hm.get('param_1', 5),
-        min_adv=best_params_hm.get('param_2', 1),
+        hedge_ratio=hedge_ratio,
+        hold_days=hold_days,
+        min_adv=min_adv,
         save_fig=True, show_fig=False)
     hm.to_csv("results/hedged_momentum_optimized.csv", index=False)
 else:

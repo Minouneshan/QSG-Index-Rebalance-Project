@@ -1,12 +1,162 @@
 {
-  "1": {},
-  "2": {},
-  "3": {},
-  "4": {},
-  "5": {},
-  "6": {},
-  "7": {},
-  "8": {},
-  "9": {},
-  "10": {}
+  "1": {
+    "total_net_pnl": 22613.55947092057,
+    "avg_return": 0.0006806072627769507,
+    "win_rate": 0.5043478260869565,
+    "avg_holding_days": 0.991304347826087,
+    "std_return": 0.030901673571845596,
+    "sharpe": 0.3511650965949672,
+    "sortino": 0.5190018614503025,
+    "max_drawdown": 102308.21913179399,
+    "num_trades": 115,
+    "exclusions": {
+      "no_price": 19,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "2": {
+    "total_net_pnl": 77746.69332015992,
+    "avg_return": 0.004468234016977075,
+    "win_rate": 0.5531914893617021,
+    "avg_holding_days": 1.6702127659574468,
+    "std_return": 0.03638880184721602,
+    "sharpe": 1.9597057974304422,
+    "sortino": 3.610062763344993,
+    "max_drawdown": 90509.27341976167,
+    "num_trades": 94,
+    "exclusions": {
+      "no_price": 40,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "3": {
+    "total_net_pnl": -54066.917115707416,
+    "avg_return": -0.001985990216174652,
+    "win_rate": 0.5172413793103449,
+    "avg_holding_days": 2.160919540229885,
+    "std_return": 0.04441088911868583,
+    "sharpe": -0.7140001578098178,
+    "sortino": -1.160605820856772,
+    "max_drawdown": 230980.39367206575,
+    "num_trades": 87,
+    "exclusions": {
+      "no_price": 47,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "4": {
+    "total_net_pnl": -277781.45856403344,
+    "avg_return": -0.012427987761586068,
+    "win_rate": 0.45977011494252873,
+    "avg_holding_days": 2.6551724137931036,
+    "std_return": 0.04756769720217809,
+    "sharpe": -4.17156832023515,
+    "sortino": -5.577569290445619,
+    "max_drawdown": 377455.6160771942,
+    "num_trades": 87,
+    "exclusions": {
+      "no_price": 47,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "5": {
+    "total_net_pnl": -44663.860297279345,
+    "avg_return": -0.0021680281968455236,
+    "win_rate": 0.5166666666666667,
+    "avg_holding_days": 2.2,
+    "std_return": 0.03293610440894961,
+    "sharpe": -1.0537621260765306,
+    "sortino": -1.6083652520178189,
+    "max_drawdown": 84504.1682485962,
+    "num_trades": 60,
+    "exclusions": {
+      "no_price": 74,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "6": {
+    "total_net_pnl": 22092.80897808075,
+    "avg_return": 0.0020848794631211196,
+    "win_rate": 0.5454545454545454,
+    "avg_holding_days": 2.5606060606060606,
+    "std_return": 0.0360053822952889,
+    "sharpe": 0.9262518421616606,
+    "sortino": 1.5706162980608933,
+    "max_drawdown": 50265.32938323975,
+    "num_trades": 66,
+    "exclusions": {
+      "no_price": 68,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "7": {
+    "total_net_pnl": -194720.07159740452,
+    "avg_return": -0.0070035350686938015,
+    "win_rate": 0.53,
+    "avg_holding_days": 4.12,
+    "std_return": 0.05510741376858544,
+    "sharpe": -2.0276358020525778,
+    "sortino": -2.5078287757972793,
+    "max_drawdown": 418144.9178736878,
+    "num_trades": 100,
+    "exclusions": {
+      "no_price": 34,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "8": {
+    "total_net_pnl": -47170.74634296415,
+    "avg_return": -0.00041722618333591544,
+    "win_rate": 0.52,
+    "avg_holding_days": 4.5,
+    "std_return": 0.05636096378393477,
+    "sharpe": -0.11810704864631127,
+    "sortino": -0.17732657650448438,
+    "max_drawdown": 366593.0248320771,
+    "num_trades": 100,
+    "exclusions": {
+      "no_price": 34,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "9": {
+    "total_net_pnl": -214087.07910663608,
+    "avg_return": -0.006841237515386841,
+    "win_rate": 0.5,
+    "avg_holding_days": 4.88,
+    "std_return": 0.06426503870967923,
+    "sharpe": -1.6984101172986716,
+    "sortino": -2.24870669334952,
+    "max_drawdown": 517432.7364905549,
+    "num_trades": 100,
+    "exclusions": {
+      "no_price": 34,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  },
+  "10": {
+    "total_net_pnl": -110822.40851337432,
+    "avg_return": -0.0025441435576669734,
+    "win_rate": 0.5,
+    "avg_holding_days": 5.2,
+    "std_return": 0.0677473743768304,
+    "sharpe": -0.5991448328922144,
+    "sortino": -0.8651420345827542,
+    "max_drawdown": 492071.66074592585,
+    "num_trades": 100,
+    "exclusions": {
+      "no_price": 34,
+      "illiquid": 0,
+      "too_small": 0
+    }
+  }
 }

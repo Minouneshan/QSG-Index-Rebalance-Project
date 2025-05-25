@@ -10,7 +10,7 @@ def sweep_post_announcement(events, price, hold_periods, **kwargs):
             hold_days=N,
             **kwargs
         )
-        sweep_metrics[N] = summary
+        sweep_metrics[str(N)] = summary  # Ensure key is a string
     save_summary(sweep_metrics, "post_announcement_momentum_sweep")
     return sweep_metrics
 
@@ -25,7 +25,7 @@ def sweep_event_day_reversion(events, price, thresholds, hold_periods, **kwargs)
                 threshold=th, hold_days=N,  # <-- Add hold_days param
                 **kwargs
             )
-            sweep_metrics[(th, N)] = summary
+            sweep_metrics[f"{th}_{N}"] = summary  # Use string key
     save_summary(sweep_metrics, "event_day_reversion_sweep")
     return sweep_metrics
 
@@ -40,7 +40,7 @@ def sweep_buy_and_hold(events, price, entry_lags, hold_periods, **kwargs):
                 entry_lag=lag, hold_days=N,
                 **kwargs
             )
-            sweep_metrics[(lag, N)] = summary
+            sweep_metrics[f"{lag}_{N}"] = summary  # Use string key
     save_summary(sweep_metrics, "buy_and_hold_sweep")
     return sweep_metrics
 
@@ -63,6 +63,6 @@ def sweep_hedged_momentum(
                     min_adv=ma,
                     **kwargs
                 )
-                sweep_metrics[(hr, N, ma)] = summary
+                sweep_metrics[f"{hr}_{N}_{ma}"] = summary  # Use string key
     save_summary(sweep_metrics, "hedged_momentum_sweep")
     return sweep_metrics

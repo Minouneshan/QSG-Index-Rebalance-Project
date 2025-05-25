@@ -1,13 +1,13 @@
 {
-  "total_net_pnl": -5489.313534469591,
-  "avg_return": 0.0006843620633833488,
-  "win_rate": 0.5304347826086957,
-  "sharpe": 0.14216604989276052,
-  "sortino": 0.20165492275125715,
-  "max_drawdown": 553043.8491145325,
-  "num_trades": 115,
+  "total_net_pnl": 242802.9708914185,
+  "avg_return": 0.017506180948579295,
+  "win_rate": 0.6349206349206349,
+  "sharpe": 5.301814833448095,
+  "sortino": 28.48449061258461,
+  "max_drawdown": 29223.731627807618,
+  "num_trades": 63,
   "exclusions": {
-    "no_price": 23,
+    "no_price": 71,
     "illiquid": 0,
     "too_small": 0
   }

@@ -1,2 +1,17 @@
 {
-  
+  "0.01_5": {
+    "total_net_pnl": -666412.2307646942,
+    "avg_return": -0.04286152668079969,
+    "win_rate": 0.0,
+    "sharpe": -12.468135740193985,
+    "sortino": -12.468135740193985,
+    "max_drawdown": 619241.1950798798,
+    "num_trades": 80,
+    "exclusions": {
+      "no_price": 45,
+      "illiquid": 0,
+      "too_small": 0,
+      "missing_spy": 0
+    }
+  }
+}
