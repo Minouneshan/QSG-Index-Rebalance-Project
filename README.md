@@ -50,7 +50,7 @@ QSG-Index-Rebalance-Project/
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/QSG-Index-Rebalance-Project.git
+    git clone https://github.com/Minouneshan/QSG-Index-Rebalance-Project.git
     cd QSG-Index-Rebalance-Project
     ```
 
