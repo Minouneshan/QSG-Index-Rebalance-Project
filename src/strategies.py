@@ -1,6 +1,5 @@
 # src/strategies.py
 import os
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -76,7 +75,7 @@ def post_announcement_momentum(
     print("\n=== Post-Announcement Momentum Results ===")
     if bt.empty:
         print("No trades generated.")
-        return bt
+        return bt, {}
     print(bt.describe())
     print(bt.head(10))
     total_pnl = bt['net_pnl'].sum()
@@ -198,6 +197,9 @@ def event_day_reversion(
             'trade_days': (exit_date - entry_date).days + 1,
         })
     rv = pd.DataFrame(reversion_results)
+    if rv.empty:
+        print("No trades generated.")
+        return rv, {}
     total_pnl = rv['net_pnl'].sum()
     avg_return = rv['return'].mean()
     win = win_rate(rv['net_pnl'])
@@ -312,6 +314,9 @@ def buy_and_hold(
         if show_fig:
             plt.show()
         plt.close()
+    if hold_df.empty:
+        print("No trades generated.")
+        return hold_df, {}
     return hold_df, summary
 
 # ===== 4. Hedged Momentum Strategy (Pro-Rata Allocation) =====
@@ -413,6 +418,9 @@ def hedged_momentum(events, price, spy, portfolio_gross=5_000_000, tran_cost=0.0
         if show_fig:
             plt.show()
         plt.close()
+    if df.empty:
+        print("No trades generated.")
+        return df, {}
     return df, summary
 
 # ===== 5. Holding Period Sweep =====
@@ -546,71 +554,3 @@ def holding_period_sweep(
 
     # Return: all trades as a DataFrame, summaries, and curves for the notebook/report
     return pd.DataFrame(sweep_results), sweep_summaries, sweep_pnls
-
-
-
-
-def sweep_post_announcement(events, price, hold_periods, **kwargs):
-    sweep_metrics = {}
-    for N in hold_periods:
-        bt, summary = post_announcement_momentum(
-            events, price,
-            hold_days=N,
-            **kwargs
-        )
-        sweep_metrics[N] = summary
-    save_summary(sweep_metrics, "post_announcement_momentum_sweep")
-    return sweep_metrics
-
-
-
-def sweep_event_day_reversion(events, price, thresholds, hold_periods, **kwargs):
-    sweep_metrics = {}
-    for th in thresholds:
-        for N in hold_periods:
-            rv, summary = event_day_reversion(
-                events, price,
-                threshold=th, hold_days=N,  # <-- Add hold_days param
-                **kwargs
-            )
-            sweep_metrics[(th, N)] = summary
-    save_summary(sweep_metrics, "event_day_reversion_sweep")
-    return sweep_metrics
-
-
-
-def sweep_buy_and_hold(events, price, entry_lags, hold_periods, **kwargs):
-    sweep_metrics = {}
-    for lag in entry_lags:
-        for N in hold_periods:
-            bh, summary = buy_and_hold(
-                events, price,
-                entry_lag=lag, hold_days=N,
-                **kwargs
-            )
-            sweep_metrics[(lag, N)] = summary
-    save_summary(sweep_metrics, "buy_and_hold_sweep")
-    return sweep_metrics
-
-
-def sweep_hedged_momentum(
-    events, price, spy,
-    hedge_ratios=[1.0],
-    hold_periods=[5],
-    min_advs=[1],
-    **kwargs
-):
-    sweep_metrics = {}
-    for hr in hedge_ratios:
-        for N in hold_periods:
-            for ma in min_advs:
-                df, summary = hedged_momentum(
-                    events, price, spy,
-                    hedge_ratio=hr,
-                    hold_days=N,
-                    min_adv=ma,
-                    **kwargs
-                )
-                sweep_metrics[(hr, N, ma)] = summary
-    save_summary(sweep_metrics, "hedged_momentum_sweep")
-    return sweep_metrics
